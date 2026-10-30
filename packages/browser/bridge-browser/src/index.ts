@@ -156,8 +156,14 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     throw new Error('bridge-browser: dsh 0.2.0-rc.1 or a compatible newer runtime is required (Gateway wireStream unavailable)')
   }
   if (connection === undefined) throw new Error('bridge-browser: dsh connection service is required')
+  // dsh 0.2.1-rc.5 dropped the Gateway default Peer: every invoke/stream call
+  // must name the Peer it speaks for. The bridge proxies the user's browser, so
+  // it speaks as the shared browser Peer (owner principal). Older runtimes
+  // accept the extra argument unchanged.
+  const peer = connection.browserPeer ?? connection.createPeer?.({ principal: { kind: 'owner' } })
+  if (peer === undefined) ctx.logger.warn('bridge-browser: the connection service exposed no Peer; Host calls will fail on dsh 0.2.1-rc.5+')
   const tokenRes = await resolveToken(resolved.token)
-  mountBridge(ctx, resolved, tokenRes, createRemoteHostApi(gateway, connection))
+  mountBridge(ctx, resolved, tokenRes, createRemoteHostApi(gateway, connection, peer))
 }
 
 function mountBridge(

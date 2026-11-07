@@ -112,7 +112,7 @@ describe('browser_press modifiers', () => {
     document.body.addEventListener('keydown', (event) => { events.push(event) })
     document.body.addEventListener('keyup', (event) => { events.push(event) })
 
-    const result = await runAction('browser_press', { key: 'Enter', modifiers: ['ctrl', 'shift'] }, context())
+    const result = await runAction('browser_press', { key: 'Enter', modifiers: ['Control', 'Shift'] }, context())
 
     expect(events).toHaveLength(2)
     for (const event of events) {
@@ -121,13 +121,13 @@ describe('browser_press modifiers', () => {
       expect(event.shiftKey).toBe(true)
       expect(event.metaKey).toBe(false)
     }
-    expect(result.text).toContain('ctrl+shift+Enter')
+    expect(result.text).toContain('Control+Shift+Enter')
   })
 
   it('rejects unknown modifiers', async () => {
     await expect(runAction('browser_press', { key: 'Enter', modifiers: ['hyper'] }, context())).rejects.toMatchObject({
       code: 'bad-args',
-      message: expect.stringContaining('modifiers supports'),
+      message: expect.stringContaining('modifiers must be a list'),
     })
   })
 })

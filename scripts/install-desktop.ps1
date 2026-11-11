@@ -377,14 +377,21 @@ if (-not (Test-Path -LiteralPath $ProfileManifest -PathType Leaf)) {
 
 $PinnedVersion = Get-PinnedDshVersion $Root
 $DesktopVersion = Get-DesktopVersion $DshHomeDir
-if ($PinnedVersion -and $DesktopVersion -and $DesktopVersion -ne $PinnedVersion) {
+# Runtime lines the bridge's peer ranges accept. The bridge source typechecks against both,
+# so a client on one of these lines needs no extra warning.
+$SupportedRuntimeLines = @('0.2.1-rc.5', '0.2.2-rc.1')
+if ($DesktopVersion -and $DesktopVersion -ne $PinnedVersion -and $SupportedRuntimeLines -notcontains $DesktopVersion) {
   Write-Host ''
   Write-Pair `
-    "注意：客户端运行时是 $DesktopVersion，而本仓库锁定 DSH $PinnedVersion。桥插件按 $PinnedVersion 的 API 编译，客户端升级后可能不兼容。" `
-    "Note: the client runtime is $DesktopVersion while this checkout pins DSH $PinnedVersion. The bridge is built against $PinnedVersion and may break after a client upgrade."
+    "注意：客户端运行时是 $DesktopVersion，而桥插件只验证过 $($SupportedRuntimeLines -join ' 与 ')。客户端升级后可能不兼容。" `
+    "Note: the client runtime is $DesktopVersion while the bridge is only verified against $($SupportedRuntimeLines -join ' and '). It may break after a client upgrade."
   Write-Pair `
     '如果安装后侧栏连不上或工具报错，请改用 web 安装：.\scripts\install.ps1 并在仓库根目录 pnpm start。' `
     'If the side panel cannot connect or tools fail, fall back to the web install: .\scripts\install.ps1 plus pnpm start in the repository root.'
+} elseif ($DesktopVersion -and $DesktopVersion -ne $PinnedVersion) {
+  Write-Pair `
+    "客户端运行时是 $DesktopVersion，桥插件的 peer 范围已覆盖该版本，无需额外配置。" `
+    "The client runtime is $DesktopVersion, which the bridge's peer ranges already accept; no extra configuration is needed."
 }
 
 Write-Step 1 '构建浏览器桥' 'Build the browser bridge'

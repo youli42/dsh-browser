@@ -19,13 +19,22 @@ const dsh = manifest.dsh as {
 }
 const engines = manifest.engines as { dsh?: string; node?: string }
 
+/**
+ * The runtime lines the bridge is verified against. Both are named explicitly
+ * because semver prerelease ranges never admit a prerelease they do not list.
+ */
+const SUPPORTED_RUNTIME_PEER = '0.2.1-rc.5 || 0.2.2-rc.1'
+
 describe('plugin manifest', () => {
   it('declares the dsh 0.2.1 manifest format and runtime range', () => {
     expect(dsh.manifestVersion).toBe(1)
     expect(dsh.bundle?.patch).toBe('./cordis.patch.yml')
     expect(dsh.client?.platform).toBe('web')
     expect(dsh.client?.inject).toEqual(expect.arrayContaining(['@deepseek-ai/dsh-client-ui-slots']))
-    expect(engines.dsh).toBe('^0.2.1-rc.5')
+    // The runtime refuses to load a plugin whose declared range does not admit its
+    // own version, and a prerelease range only admits prereleases it names: the
+    // 0.2.2 line has to be listed explicitly, `^0.2.1-rc.5` alone would exclude it.
+    expect(engines.dsh).toBe('^0.2.1-rc.5 || 0.2.2-rc.1')
     expect(engines.node).toBe('>=24')
   })
 
@@ -34,7 +43,7 @@ describe('plugin manifest', () => {
     const dev = manifest.devDependencies as Record<string, string>
     const dshPeers = Object.keys(peers).filter(name => name.startsWith('@deepseek-ai/dsh'))
     expect(dshPeers.length).toBeGreaterThan(0)
-    for (const name of dshPeers) expect(peers[name]).toBe('0.2.1-rc.5')
+    for (const name of dshPeers) expect(peers[name]).toBe(SUPPORTED_RUNTIME_PEER)
     for (const name of dshPeers) {
       // Every runtime peer is also a build-time dependency of this workspace.
       expect(dev[name] ?? peers[name]).toBeDefined()

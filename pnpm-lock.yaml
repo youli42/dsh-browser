@@ -172,7 +172,7 @@ importers:
   packages/browser/bridge-browser:
     dependencies:
       '@deepseek-ai/schemastery':
-        specifier: ~3.18.5
+        specifier: ~3.18.5 || ~3.19.0
         version: 3.18.5
       ws:
         specifier: ^8.21.0
